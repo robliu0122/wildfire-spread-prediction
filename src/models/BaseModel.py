@@ -61,6 +61,7 @@ class BaseModel(pl.LightningModule, ABC):
         self.val_f1 = self.train_f1.clone()
         self.test_f1 = self.train_f1.clone()
 
+        self.val_avg_precision = torchmetrics.AveragePrecision("binary")
         self.test_avg_precision = torchmetrics.AveragePrecision("binary")
         self.test_precision = torchmetrics.Precision("binary")
         self.test_recall = torchmetrics.Recall("binary")
@@ -197,6 +198,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         loss = self.compute_loss(y_hat, y)
         f1 = self.val_f1(y_hat, y)
+        self.val_avg_precision.update(y_hat, y)
         self.log(
             "val_loss",
             loss.item(),
@@ -213,7 +215,17 @@ class BaseModel(pl.LightningModule, ABC):
             on_epoch=True,
             prog_bar=True,
             logger=True,
-        )  
+        )
+        # AP-based early stopping / checkpoint selection (per WSTS+ ablation:
+        # using val_loss instead of val_AP costs ~29% test AP).
+        self.log(
+            "val_AP",
+            self.val_avg_precision,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+        )
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -286,10 +298,20 @@ class BaseModel(pl.LightningModule, ABC):
 
     def compute_loss(self, y_hat, y):
         if self.hparams.loss_function == "Focal":
+            # pos_class_weight = inverse positive frequency (e.g. 236 = 1/(1/237) - 1).
+            # For severe class imbalance we want alpha CLOSE TO 1 so positives are weighted
+            # heavily: alpha = pw / (1 + pw) = neg_frequency ~ 0.9958 for pw=236.
+            # The original code computed alpha = 1 - pw/(1+pw) ~ 0.0042 which down-weights
+            # positives and makes the model collapse to predicting all negatives (loss ~ 1e-4
+            # but val_AP ~ base rate). Matches WSTS+ description: alpha = inverse pos frequency.
+            pw = self.hparams.pos_class_weight
+            alpha = pw / (1.0 + pw) if pw > 1 else pw
+            # sigmoid_focal_loss requires y and y_hat to have the same shape
+            y_target = y.float().unsqueeze(1) if y.dim() == y_hat.dim() - 1 else y.float()
             return self.loss(
                 y_hat,
-                y.float(),
-                alpha=1 - self.hparams.pos_class_weight,
+                y_target,
+                alpha=alpha,
                 gamma=2,
                 reduction="mean",
             )

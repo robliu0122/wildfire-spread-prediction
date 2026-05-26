@@ -1,0 +1,32 @@
+# Lightning training logs and checkpoints (huge)
+lightning_logs/
+wandb/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local backups
+*.bak
+*.bak.*
+*.stub.*
+
+# PyTest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local-only secrets
+.env
+.wandb-credentials
+
+# PaperSpine workflow outputs (regenerable)
+paper_rewriting_output/

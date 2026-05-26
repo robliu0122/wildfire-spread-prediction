@@ -28,7 +28,7 @@ class SMPModel(BaseModel):
 
         self.model = smp.Unet(
             encoder_name=encoder_name,  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-            encoder_weights=None,  # use `imagenet` pre-trained weights for encoder initialization
+            encoder_weights="imagenet",  # ImageNet pre-trained encoder; SMP handles in_channels != 3 automatically
             in_channels=n_channels,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
             classes=1,  # model output channels (number of classes in your dataset)
         )

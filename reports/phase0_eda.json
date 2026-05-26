@@ -1,0 +1,246 @@
+{
+  "per_year": [
+    {
+      "year": 2018,
+      "n_fires": 176,
+      "total_pixels": 299305533,
+      "fire_pixels": 384182,
+      "median_fire_size": 676.0,
+      "mean_fire_size": 2182.8522727272725,
+      "base_rate": 0.001283578008562909,
+      "fires_with_zero_fire_pixels": 0
+    },
+    {
+      "year": 2019,
+      "n_fires": 74,
+      "total_pixels": 115028423,
+      "fire_pixels": 45500,
+      "median_fire_size": 322.0,
+      "mean_fire_size": 614.8648648648649,
+      "base_rate": 0.00039555441006089426,
+      "fires_with_zero_fire_pixels": 0
+    },
+    {
+      "year": 2020,
+      "n_fires": 201,
+      "total_pixels": 345155486,
+      "fire_pixels": 674958,
+      "median_fire_size": 642.0,
+      "mean_fire_size": 3358.0,
+      "base_rate": 0.0019555186789063524,
+      "fires_with_zero_fire_pixels": 0
+    },
+    {
+      "year": 2021,
+      "n_fires": 156,
+      "total_pixels": 315989289,
+      "fire_pixels": 774039,
+      "median_fire_size": 1348.0,
+      "mean_fire_size": 4961.788461538462,
+      "base_rate": 0.002449573536019444,
+      "fires_with_zero_fire_pixels": 0
+    }
+  ],
+  "feature_means_at_fire": {
+    "2018": {
+      "NDVI": {
+        "fire_mean": 3984.615941584341,
+        "fire_std": 1890.0180566206861,
+        "nofire_mean": 3947.6574468085105,
+        "nofire_std": 2193.4280934909284
+      },
+      "Precip": {
+        "fire_mean": 0.15521823960930742,
+        "fire_std": 0.99969098229687,
+        "nofire_mean": 0.505204622868572,
+        "nofire_std": 2.6237407933148185
+      },
+      "WindSpeed": {
+        "fire_mean": 3.6167337219436355,
+        "fire_std": 1.5201142020724956,
+        "nofire_mean": 3.405739118969282,
+        "nofire_std": 1.422754978866439
+      },
+      "MaxTemp": {
+        "fire_mean": 299.654364715405,
+        "fire_std": 6.622620866320296,
+        "nofire_mean": 298.86013384012614,
+        "nofire_std": 8.322106183438487
+      },
+      "Humidity": {
+        "fire_mean": 0.005104751893576178,
+        "fire_std": 0.0019332703152151538,
+        "nofire_mean": 0.0052805506965375405,
+        "nofire_std": 0.0020701729090071347
+      },
+      "ERC": {
+        "fire_mean": 73.81236283833212,
+        "fire_std": 15.345867144956333,
+        "nofire_mean": 68.49028182701652,
+        "nofire_std": 19.02110222099063
+      },
+      "PDSI": {
+        "fire_mean": -1.8685390024030288,
+        "fire_std": 1.917813666597472,
+        "nofire_mean": -1.842395015188274,
+        "nofire_std": 1.8718340724966696
+      },
+      "Elevation": {
+        "fire_mean": 1595.1243102298224,
+        "fire_std": 801.1638022695912,
+        "nofire_mean": 1492.6494163214804,
+        "nofire_std": 783.8098168892257
+      }
+    },
+    "2019": {
+      "NDVI": {
+        "fire_mean": 3943.938838824051,
+        "fire_std": 1763.9575049543762,
+        "nofire_mean": 3955.7823731501057,
+        "nofire_std": 2064.08938102381
+      },
+      "Precip": {
+        "fire_mean": 0.3080368731441852,
+        "fire_std": 1.6293325136283432,
+        "nofire_mean": 0.6280964045107311,
+        "nofire_std": 2.232679609366199
+      },
+      "WindSpeed": {
+        "fire_mean": 3.320754717152829,
+        "fire_std": 1.223090259964303,
+        "nofire_mean": 3.214073975187,
+        "nofire_std": 1.2747643905558108
+      },
+      "MaxTemp": {
+        "fire_mean": 300.2450237974694,
+        "fire_std": 7.337502390625927,
+        "nofire_mean": 299.61680622496607,
+        "nofire_std": 8.759134778480476
+      },
+      "Humidity": {
+        "fire_mean": 0.0056162508941149806,
+        "fire_std": 0.0021773965163862548,
+        "nofire_mean": 0.00597473772571761,
+        "nofire_std": 0.0023407050096915035
+      },
+      "ERC": {
+        "fire_mean": 67.04940227567334,
+        "fire_std": 19.513594293162537,
+        "nofire_mean": 62.94986467328264,
+        "nofire_std": 21.705968127970213
+      },
+      "PDSI": {
+        "fire_mean": 1.0922425488892948,
+        "fire_std": 1.7897456591318335,
+        "nofire_mean": 1.1172514541528555,
+        "nofire_std": 1.7686553697048335
+      },
+      "Elevation": {
+        "fire_mean": 1386.792740890105,
+        "fire_std": 700.9998510136429,
+        "nofire_mean": 1322.1962205539735,
+        "nofire_std": 692.8916194765817
+      }
+    },
+    "2020": {
+      "NDVI": {
+        "fire_mean": 3967.7329388341996,
+        "fire_std": 1975.7399542853552,
+        "nofire_mean": 3897.0675675675675,
+        "nofire_std": 2147.640915758309
+      },
+      "Precip": {
+        "fire_mean": 0.1773214287476755,
+        "fire_std": 0.9204049903536314,
+        "nofire_mean": 0.4108540160374648,
+        "nofire_std": 2.158176163176489
+      },
+      "WindSpeed": {
+        "fire_mean": 4.004012603337775,
+        "fire_std": 1.7657281492235464,
+        "nofire_mean": 3.55261389205639,
+        "nofire_std": 1.565418182009726
+      },
+      "MaxTemp": {
+        "fire_mean": 300.3594537446479,
+        "fire_std": 7.703224177462112,
+        "nofire_mean": 299.63947485751214,
+        "nofire_std": 9.344265142651006
+      },
+      "Humidity": {
+        "fire_mean": 0.0050502846588122855,
+        "fire_std": 0.0021861494124050377,
+        "nofire_mean": 0.005369734530637529,
+        "nofire_std": 0.0023220012652825804
+      },
+      "ERC": {
+        "fire_mean": 75.50052521008404,
+        "fire_std": 18.022846720921617,
+        "nofire_mean": 70.92890403725217,
+        "nofire_std": 20.578858101048354
+      },
+      "PDSI": {
+        "fire_mean": -1.5053801692746833,
+        "fire_std": 1.7511957587710476,
+        "nofire_mean": -1.4563637235983005,
+        "nofire_std": 1.8085245022981744
+      },
+      "Elevation": {
+        "fire_mean": 1434.9882340581994,
+        "fire_std": 762.4384240898734,
+        "nofire_mean": 1377.6140426967374,
+        "nofire_std": 760.1315776352141
+      }
+    },
+    "2021": {
+      "NDVI": {
+        "fire_mean": 4602.438477054967,
+        "fire_std": 1996.9924531440704,
+        "nofire_mean": 4625.2676648473225,
+        "nofire_std": 2202.0258530441615
+      },
+      "Precip": {
+        "fire_mean": 0.3341943408086747,
+        "fire_std": 1.6741033061220778,
+        "nofire_mean": 0.5947023918904054,
+        "nofire_std": 2.401787645736238
+      },
+      "WindSpeed": {
+        "fire_mean": 3.723882734543381,
+        "fire_std": 1.3978737618170478,
+        "nofire_mean": 3.511304823232658,
+        "nofire_std": 1.3459143142429406
+      },
+      "MaxTemp": {
+        "fire_mean": 300.22078703269943,
+        "fire_std": 6.474443772990356,
+        "nofire_mean": 299.7905364895025,
+        "nofire_std": 7.9357969272944064
+      },
+      "Humidity": {
+        "fire_mean": 0.0055046528658310445,
+        "fire_std": 0.001840297855908387,
+        "nofire_mean": 0.005798982075496623,
+        "nofire_std": 0.0020080267030561936
+      },
+      "ERC": {
+        "fire_mean": 71.11288779554462,
+        "fire_std": 16.456131314770353,
+        "nofire_mean": 66.25607145041904,
+        "nofire_std": 19.78438260661703
+      },
+      "PDSI": {
+        "fire_mean": -3.9238452632118945,
+        "fire_std": 1.1942392936657262,
+        "nofire_mean": -3.688655361439758,
+        "nofire_std": 1.3744716108529598
+      },
+      "Elevation": {
+        "fire_mean": 1486.6214800707387,
+        "fire_std": 636.0657998271404,
+        "nofire_mean": 1426.8904918431945,
+        "nofire_std": 684.7953078898745
+      }
+    }
+  }
+}

@@ -334,18 +334,22 @@ class FireSpreadDataset(Dataset):
         else:
             x, y = self.center_crop_x32(x, y)
 
-        # Some features take values in [0,360] degrees. By applying sin, we make sure that values near 0 and 360 are
-        # close in feature space, since they are also close in reality.
-        x[:, self.indices_of_degree_features, ...] = torch.sin(
-            torch.deg2rad(x[:, self.indices_of_degree_features, ...]))
+        # Cyclic angle encoding: replace each degree channel with (sin, cos). sin stays at
+        # the original index (so existing per-channel means/stds remain valid); cos is
+        # appended after standardize_features and scaled by the corresponding sin-channel
+        # std so both halves arrive at roughly the same scale. Fixes the bug where sin
+        # alone collapses 90deg and 90deg-mirror onto the same value.
+        _angle_rad = torch.deg2rad(x[:, self.indices_of_degree_features, ...])
+        x[:, self.indices_of_degree_features, ...] = torch.sin(_angle_rad)
+        _cos_degree_features = torch.cos(_angle_rad) / self.stds[:, self.indices_of_degree_features, ...]
 
         # Compute binary mask of active fire pixels before normalization changes what 0 means. 
         binary_af_mask = (x[:, -1:, ...] > 0).float()
 
         x = self.standardize_features(x)
 
-        # Adds the binary fire mask as an additional channel to the input data.
-        x = torch.cat([x, binary_af_mask], axis=1)
+        # Append cos channels for cyclic angle encoding, then the binary fire mask.
+        x = torch.cat([x, _cos_degree_features, binary_af_mask], axis=1)
 
         # Replace NaN values with 0, thereby essentially setting them to the mean of the respective feature.
         x = torch.nan_to_num(x, nan=0.0)
@@ -478,8 +482,14 @@ class FireSpreadDataset(Dataset):
         Returns:
             _type_: _description_ Tuple of lists of integers, first list contains static feature indices, second list contains dynamic feature indices.
         """
-        static_feature_ids = [12,13,14] + list(range(16,33))
-        dynamic_feature_ids = list(range(12)) + [15] + list(range(33,40))
+        # After cyclic angle encoding the final tensor layout is:
+        #   0..32  -> raw 0..15 + one-hot land cover (raw 16) -> indices 0..32
+        #   33..38 -> raw 17..22 (forecast features + active fire) -> indices 33..38
+        #   39, 40, 41 -> cos of degree features [7, 13, 19] (cos(wind_dir), cos(aspect), cos(forecast_wind_dir))
+        #   42 -> binary active fire mask
+        # cos(aspect) is static (aspect itself is static); the other two cos channels are dynamic.
+        static_feature_ids = [12,13,14] + list(range(16,33)) + [40]
+        dynamic_feature_ids = list(range(12)) + [15] + list(range(33,40)) + [41, 42]
         return static_feature_ids, dynamic_feature_ids
 
     @staticmethod
@@ -526,6 +536,8 @@ class FireSpreadDataset(Dataset):
 
         # If we deduplicate static features, we remove them from all time steps but the last one.
         # The last day then gets dynamic and static features. All other days only get dynamic features. 
+        # Note: get_static_and_dynamic_feature_ids already includes the cyclic-encoding
+        # cos channels (indices 40,41,42), so n_static + n_dynamic already counts them.
         n_features = (int(deduplicate_static_features)*n_dynamic_features)*(n_observations-1) + n_all_features
 
         return n_features
