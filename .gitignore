@@ -1,32 +1,56 @@
-# Lightning training logs and checkpoints (huge)
+# ============================================================
+#  Data & large artifacts — never commit
+# ============================================================
+# Raw / HDF5 dataset lives outside the repo (download from Zenodo)
+data/
+*.hdf5
+*.h5
+# Trained checkpoints (~225 MB each, exceed GitHub's 100 MB limit)
+checkpoints/
+*.ckpt
+# Lightning / Weights&Biases run logs
 lightning_logs/
 wandb/
+*.log
 
-# Python
+# ============================================================
+#  Secrets & personal notes — never commit
+# ============================================================
+# NOTE: 指令.txt contained a W&B API key in development. Keep it out.
+指令.txt
+.env
+.wandb-credentials
+
+# ============================================================
+#  AI-assistant / paper-workflow scratch (regenerable)
+# ============================================================
+CLAUDE.md
+paper_rewriting_output/
+docs/superpowers/
+
+# ============================================================
+#  Python
+# ============================================================
 __pycache__/
 *.pyc
 *.pyo
 .ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Editor / OS
+# ============================================================
+#  Editor / OS
+# ============================================================
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# Local backups
+# ============================================================
+#  Backups / auxiliary
+# ============================================================
 *.bak
 *.bak.*
 *.stub.*
-
-# PyTest / coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Local-only secrets
-.env
-.wandb-credentials
-
-# PaperSpine workflow outputs (regenerable)
-paper_rewriting_output/
+reports/phase1_changes.patch

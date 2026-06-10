@@ -1,0 +1,48 @@
+{
+  "2018": {
+    "folds": [
+      7,
+      9,
+      11
+    ],
+    "n_fires": 2893,
+    "ensemble_AP_no_tta": 0.48014795780181885,
+    "ensemble_AP_tta": 0.482791930437088
+  },
+  "2019": {
+    "folds": [
+      3,
+      5,
+      10
+    ],
+    "n_fires": 1055,
+    "ensemble_AP_no_tta": 0.33652034401893616,
+    "ensemble_AP_tta": 0.3398534655570984
+  },
+  "2020": {
+    "folds": [
+      1,
+      4,
+      8
+    ],
+    "n_fires": 3287,
+    "ensemble_AP_no_tta": 0.4844197630882263,
+    "ensemble_AP_tta": 0.4881788194179535
+  },
+  "2021": {
+    "folds": [
+      0,
+      2,
+      6
+    ],
+    "n_fires": 3337,
+    "ensemble_AP_no_tta": 0.5771229267120361,
+    "ensemble_AP_tta": 0.5808390378952026
+  },
+  "_summary": {
+    "mean_no_tta": 0.46955274790525436,
+    "mean_tta": 0.47291581332683563,
+    "delta": 0.0033630654215812683,
+    "note": "mean across 4 test years; no_tta must match phase2c_ensemble.json (0.4696)."
+  }
+}

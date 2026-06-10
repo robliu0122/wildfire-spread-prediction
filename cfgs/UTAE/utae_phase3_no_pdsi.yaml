@@ -1,0 +1,32 @@
+# pytorch_lightning==2.0.1
+# Phase 3: UTAE (temporal self-attention) + cosine LR + weight_decay, matching
+# the Phase 2 optimizer recipe so the only change vs phase2b is the model/temporal
+# handling. n_channels is auto-computed by train.py (before_instantiate_classes);
+# the value here (42 for no-PDSI T=5) is overwritten before instantiation.
+#
+# NOTE: UTAELightning.__init__ only accepts (n_channels, flatten_temporal_dimension,
+# pos_class_weight, loss_function). All UTAE architecture params (encoder_widths,
+# n_head, d_model, ...) are HARDCODED inside the class, so they must NOT be listed
+# here or LightningCLI errors: 'No action for destination key "encoder_widths"'.
+# use_doy is also hardcoded True inside UTAELightning, so it is omitted too.
+seed_everything: 0
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.001
+    weight_decay: 1.0e-4
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.CosineAnnealingLR
+  init_args:
+    T_max: 100
+model:
+  class_path: models.UTAELightning
+  init_args:
+    n_channels: 42
+    flatten_temporal_dimension: false
+    pos_class_weight: 236
+    loss_function: Focal
+
+do_train: true
+do_predict: false
+do_test: true

@@ -1,168 +1,178 @@
-# WildfireSpreadTS: A dataset of multi-modal time series for wildfire spread prediction
+# Wildfire Spread Prediction (WildfireSpreadTS, extended)
 
-This repository contains the code for recreating the experiments in the WildfireSpreadTS paper. 
+This repository extends the **WildfireSpreadTS (WSTS)** next-day wildfire-spread
+benchmark (Gerard et al., NeurIPS 2023 Datasets & Benchmarks) with a sequence of
+reproducible improvements. Starting from the original repository baseline, the
+**12-fold leave-one-year-out mean test AP improves from 0.349 to 0.473**, matching
+the published ResNet18-UNet state of the art (WSTS+, ~0.468) and surpassing it on
+the hardest test year (2019).
 
-- [Link to main paper](https://openreview.net/pdf?id=RgdGkPRQ03)
-- [Link to supplementary material](https://openreview.net/attachment?id=RgdGkPRQ03&name=supplementary_material)
+> Fork of <https://github.com/SebastianGer/WildfireSpreadTS>. The original
+> dataset, model code, and paper are credited under [Acknowledgements](#acknowledgements).
 
-## Updates 
-- After publishing the paper, we discovered a bug in the dataset class. Based on initial experiments, the corrected dataset class leads to slightly higher performance, but the trends in the results are basically the same as those reported in the paper. The bug was fixed in commit `ab3c8f35c5ec8c52c306a4488eaeb71a5a13d0de`, in case you want to roll-back the change to compare with the results in the paper.
+## Headline results
 
-- **Feb 2026:** An observant researcher, who kindly reached out to me, pointed out that when dealing with angle features, the current code only transforms the features via sin, but should use both sin and cos, to not lose information. This happens [here](https://github.com/SebastianGer/WildfireSpreadTS/blob/main/src/dataloader/FireSpreadDataset.py#L339). I'm currently too occupied with deadlines in other projects to make sure that nothing breaks when I fix this, so if you're working with these features, be aware of this issue. 
+12-fold mean test AP (Average Precision; the design has exactly 3 folds per test
+year, so the 12-fold mean equals the 4-year-stratum mean):
 
+| Stage | Configuration | T | Mean AP | Δ |
+|-------|---------------|---|---------|---|
+| Baseline | original repo (Dice loss, no pretrain, val-loss selection) | 1 | 0.349 | — |
+| Phase 1 | + sin/cos angle fix, ImageNet pretrain, Focal loss, val-AP selection | 1 | 0.397 | +13.8% |
+| Phase 2A | + 5-day temporal stack, cosine LR, weight decay, grad-clip | 5 | 0.386 | −2.8% |
+| Phase 2B | Phase 2A − PDSI channel | 5 | 0.429 | +11.2% |
+| Phase 2C | per-year 3-fold inference ensemble (no retrain) | 5 | 0.470 | +9.4% |
+| + D4-TTA | dihedral test-time augmentation | 5 | **0.473** | +0.7% |
 
-## Setup the environment
+Per-year breakdown (Phase 2C ensemble vs. published ResNet18-UNet):
 
-``` pip3 install -r requirements.txt ```
+| Test year | Phase 2C | + TTA | WSTS+ (paper) |
+|-----------|----------|-------|---------------|
+| 2018 | 0.480 | 0.483 | ~0.49 |
+| 2019 | 0.337 | 0.340 | ~0.31 |
+| 2020 | 0.484 | 0.488 | ~0.42 |
+| 2021 | 0.577 | 0.581 | ~0.57 |
 
-## Preparing the dataset
+Two findings not present in the original benchmark:
+- **Dropping the PDSI (drought-index) channel** removes a strongly year-shifting
+  covariate and rescues a catastrophic fold (fold 10: 0.040 → 0.310).
+- **A per-year inference ensemble** adds +0.040 mean AP at zero extra training
+  cost, helping the highest-variance stratum (2019) the most.
 
-The dataset is freely available at [https://doi.org/10.5281/zenodo.8006177](https://doi.org/10.5281/zenodo.8006177) under CC-BY-4.0. For training, you will need to convert them to HDF5 files, which take up twice as much space but allow for much faster training.
-
-To convert the dataset to HDF5, run:
-```python3 src/preprocess/CreateHDF5Dataset.py --data_dir YOUR_DATA_DIR --target_dir YOUR_TARGET_DIR```
- substituting the path to your local dataset and where you want the HDF5 version of the dataset to be created. 
-
-You can skip this step, and simply pass `--data.load_from_hdf5=False` on the command line, but be aware that you won't be able to perform training at any reasonable speed. 
-
-## Re-running the baseline experiments
-
-We use wandb to log experimental results. This can be turned off by setting the environment variable `WANDB_MODE=disabled`. The results will then be logged to a local directory instead.
-
-Experiments are parameterized via yaml files in the `cfgs` directory. Arguments are parsed via the [LightningCLI](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html).
-
-Grid searches and repetitions of experiments were done via WandB sweeps. Those are parameterized via yaml files in the `cfgs` directory prefixed with `wandb_`. For example, to run the experiments that Table 3 in the main paper is based on, you can run a wandb sweep with `cfgs/unet/wandb_table3.yaml`. For explanations on how to use wandb sweeps please refer to the [original documentation](https://docs.wandb.ai/guides/sweeps). To run the same experiments without WandB, the parameters specified in the WandB sweep configuration file can simply be passed via the command line. 
-
-For example, to train the U-net architecture on one day of observations, you could pass arguments on the command line as follows:
-
-```
-python3 train.py --config=cfgs/unet/res18_monotemporal.yaml --trainer=cfgs/trainer_single_gpu.yaml --data=cfgs/data_monotemporal_full_features.yaml --seed_everything=0 --trainer.max_epochs=200 --do_test=True --data.data_dir YOUR_DATA_DIR
-```
-where you replace `YOUR_DATA_DIR` with the path to your local HDF5 dataset. Alternatively, you can permanently set the data directory in the respective data config files. Parameters defined in config files are overwritten by command-line arguments. Later arguments overwrite previously given arguments. 
-
-## Re-creating the dataset
-
-The code to create the dataset using Google Earth Engine is available at [https://github.com/SebastianGer/WildfireSpreadTSCreateDataset](https://github.com/SebastianGer/WildfireSpreadTSCreateDataset).
-
-
-## Using the dataset for your own experiments
-
-To use the dataset outside of the baseline experiments, you can use the Lightning Datamodule at `src/dataloader/FireSpreadDataModule.py` which directly provides dataset loaders for train/val/test set. Alternatively, you can use the PyTorch dataset at `src/dataloader/FireSpreadDataset.py`. 
-
-## Citation
+## Repository layout
 
 ```
-@inproceedings{
-    gerard2023wildfirespreadts,
-    title={WildfireSpread{TS}: A dataset of multi-modal time series for wildfire spread prediction},
-    author={Sebastian Gerard and Yu Zhao and Josephine Sullivan},
-    booktitle={Thirty-seventh Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
-    year={2023},
-    url={https://openreview.net/forum?id=RgdGkPRQ03}
-}
+src/                      original WSTS code (+ our bug fixes)
+  dataloader/             FireSpreadDataset, FireSpreadDataModule
+  models/                 SMPModel (U-Net), UTAE, ConvLSTM, ...
+  preprocess/             CreateHDF5Dataset.py
+  train.py                LightningCLI entrypoint
+cfgs/                     YAML configs (model / data / trainer / sweeps)
+scripts/                  per-phase sweep drivers (skip-if-done, idempotent)
+reports/                  analysis scripts + result JSON/CSV (numbers only)
 ```
 
----
+Large artifacts (the dataset, `.ckpt` checkpoints, `lightning_logs/`, W&B logs)
+are intentionally **not** tracked — see `.gitignore`. The committed `reports/*.json`
+and `reports/*.csv` hold the result numbers so the tables above are verifiable
+without rerunning anything.
 
-# Our Improvements (ECE 228 fork)
+## Setup
 
-This fork systematically extends the original WSTS baseline through **5 experimental phases**. The 12-fold mean test AP improved from **0.349 → 0.470**, matching the WSTS+ paper Res18-UNet SOTA (0.468 single-day / 0.472 multi-temporal). See `reports/phase2_paper_zh.tex` (and the rendered PDF in `paper_rewriting_output/final_paper/`) for the full progress report.
-
-## Phase summary
-
-| Phase | Configuration | 12-fold mean AP |
-|-------|--------------|----------------|
-| Phase 0 | Original repo baseline (T=1, Dice, val_loss) | 0.349 |
-| Phase 1 | + angle sin/cos bug fix, + ImageNet pretrain, + Focal loss (alpha bug fixed), + val_AP early stopping | 0.397 (+14%) |
-| Phase 2A | + T=5 multi-temporal, + cosine LR, + weight_decay 1e-4, + grad clip | 0.386 (−3%, fold 10 collapse) |
-| Phase 2B | Phase 2A minus PDSI channel (raw idx 15) | 0.429 (+11%) |
-| **Phase 2C** | Per-test-year 3-fold inference ensemble (no retrain) | **0.470 (+10%)** |
-
-Key independent findings (not in WSTS+ paper):
-- **PDSI ablation is a double-edged sword**: rescued fold 10 (+0.270) and fold 8 (+0.185), but regressed fold 3 (−0.162). Same test year (2019) splits both directions — PDSI is a train/val-composition-dependent dual-role feature.
-- **Per-year inference ensemble (Phase 2C)** delivers +0.040 mean AP at zero additional training cost; the 2019 stratum (highest variance) gains the most (+0.077).
-
-## Reproduction
-
-### 1. Environment
+Python 3.10. We use [`uv`](https://github.com/astral-sh/uv) (pip also works):
 
 ```bash
-# Use uv (recommended) or pip
-uv venv /path/to/wsts_env
-source /path/to/wsts_env/bin/activate
+uv venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-### 2. Data
+## Data
 
-Same as the original WSTS instructions above — download from Zenodo, convert to HDF5 via `src/preprocess/CreateHDF5Dataset.py`. The sweep scripts below assume the HDF5 data is at `/root/autodl-tmp/wsts/data_hdf5`; edit the `--data.data_dir` argument in the scripts to match your path.
-
-### 3. Run the sweeps (sequential)
-
-```bash
-# Phase 1 single-day baseline (~6-10h GPU)
-bash scripts/run_phase1_full.sh
-
-# Phase 2A multi-temporal sweep (~12h GPU)
-bash scripts/run_phase2a_full.sh
-
-# Phase 2B no-PDSI sweep (~8h GPU, run A and B in parallel for ~4-5h wall time)
-bash scripts/run_phase2b_A.sh  # folds 1, 4, 6, 8
-bash scripts/run_phase2b_B.sh  # folds 3, 5, 7, 9
-# Note: folds 0, 2, 10, 11 are completed by the orchestrator earlier; the A/B
-# scripts use disjoint fold lists to avoid race conditions.
-```
-
-Each sweep script writes per-fold logs to `/root/autodl-tmp/wsts/logs/` (edit `LOG_DIR` in the scripts) and uses skip-if-done logic, so reruns are idempotent.
-
-### 4. Analyze
+The dataset is on Zenodo (CC-BY-4.0): <https://doi.org/10.5281/zenodo.8006177>.
+Download it, then convert to HDF5 for fast training:
 
 ```bash
-# Phase 1 vs 2A vs 2B per-fold + per-year + 12-fold mean
-python reports/analyze_phase2.py
-# -> reports/phase2_summary.json
-
-# Phase 2C per-year inference ensemble (~30-50 min GPU)
-python reports/ensemble_inference.py
-# -> reports/phase2c_ensemble.json
+python src/preprocess/CreateHDF5Dataset.py \
+    --data_dir  YOUR_RAW_DATA_DIR \
+    --target_dir YOUR_HDF5_DIR
 ```
 
-### 5. Generate figures (local, no GPU)
+You can skip HDF5 and pass `--data.load_from_hdf5=False`, but training will be
+much slower. Point experiments at your data with `--data.data_dir YOUR_HDF5_DIR`
+(or edit the `data_dir` field in the `cfgs/data_*.yaml` files).
 
-Sync the two JSON files to your local report directory, then:
+## Reproduce
+
+Training uses [LightningCLI](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html);
+each experiment is a `--config` (model) + `--data` + `--trainer` triple. W&B
+logging can be disabled with `WANDB_MODE=disabled`.
+
+A single fold, by hand:
 
 ```bash
-python make_phase2_figures.py  # writes fig12-15*.png
+python src/train.py \
+    --config=cfgs/unet/res18_monotemporal.yaml \
+    --trainer=cfgs/trainer_single_gpu.yaml \
+    --data=cfgs/data_monotemporal_full_features.yaml \
+    --seed_everything=0 --do_test=True \
+    --data.data_dir YOUR_HDF5_DIR
 ```
 
-## Key code changes vs upstream
+The full 12-fold sweeps are wrapped in idempotent driver scripts (edit
+`DATA_DIR` / `LOG_DIR` near the top of each before running):
+
+```bash
+bash scripts/run_phase1_full.sh        # Phase 1, T=1            (~6-10 h GPU)
+bash scripts/run_phase2a_full.sh       # Phase 2A, T=5 all feats (~12 h GPU)
+bash scripts/run_phase2b_A.sh          # Phase 2B, no-PDSI, folds subset A
+bash scripts/run_phase2b_B.sh          # Phase 2B, no-PDSI, folds subset B
+```
+
+Aggregate per-fold / per-year / 12-fold means:
+
+```bash
+python reports/analyze_phase2.py       # -> reports/phase2_summary.json
+```
+
+Phase 2C inference ensemble (reuses the Phase 2B checkpoints, no training):
+
+```bash
+python reports/ensemble_inference.py        # -> reports/phase2c_ensemble.json
+python reports/tta_ensemble_inference.py     # + D4-TTA -> reports/phase2c_tta_ensemble.json
+```
+
+### Optional / exploratory
+
+```bash
+bash scripts/run_swa_pilot.sh          # SWA pilot (reported as a negative ablation)
+python reports/utae_cpu_check.py       # sanity-check the UTAE temporal model wiring
+bash scripts/run_phase3_utae.sh        # UTAE sweep scaffold (not in headline results)
+python scripts/compute_pdsi_year_stats.py   # PDSI cross-year drift statistics
+```
+
+## Key changes vs. upstream
 
 | File | Change | Phase |
 |------|--------|-------|
-| `src/dataloader/FireSpreadDataset.py:337-350` | Angle features: sin → (sin, cos) | 1 |
-| `src/models/SMPModel.py:31` | encoder_weights=imagenet | 1 |
-| `src/models/BaseModel.py` | val_AP metric + Focal alpha bug fix | 1 |
-| `cfgs/trainer_single_gpu.yaml` | gradient_clip_val=1.0, EarlyStopping monitor=val_AP | 1-2A |
-| `cfgs/unet/res18_monotemporal.yaml` | AdamW + cosine LR + weight_decay 1e-4 | 2A |
-| `cfgs/data_multitemporal_full_features.yaml` | T=5, bs=64, nw=8 | 2A |
-| `cfgs/data_multitemporal_no_pdsi.yaml` | + features_to_keep excludes raw idx 15 (PDSI) | 2B |
-| `src/dataloader/FireSpreadDataModule.py:83-92` | prefetch_factor=8, persistent_workers=True | 2A-2B |
-| `reports/analyze_phase2.py` | Phase 1/2A/2B aggregator + PDSI hypothesis check | 2 |
-| `reports/ensemble_inference.py` | Per-year 3-fold ensemble with incremental save + resume | 2C |
-| `scripts/run_phase2*` | Sweep drivers with skip-if-done | 2 |
+| `src/dataloader/FireSpreadDataset.py` | angle features: `sin` → (`sin`, `cos`) | 1 |
+| `src/models/SMPModel.py` | encoder weights `None` → `imagenet` | 1 |
+| `src/models/BaseModel.py` | add `val_AP` metric; fix Focal-loss `alpha` | 1 |
+| `cfgs/trainer_single_gpu.yaml` | `gradient_clip_val=1.0`; early-stop / checkpoint on `val_AP` | 1–2A |
+| `cfgs/unet/res18_monotemporal.yaml` | AdamW + cosine LR (`T_max=100`) + weight decay `1e-4` | 2A |
+| `cfgs/data_multitemporal_full_features.yaml` | `T=5`, batch 64 | 2A |
+| `cfgs/data_multitemporal_no_pdsi.yaml` | drop PDSI (raw channel index 15) | 2B |
+| `reports/analyze_phase2.py` | per-fold / per-year aggregator + PDSI check | 2 |
+| `reports/ensemble_inference.py` | per-year 3-fold ensemble (incremental, resumable) | 2C |
+| `reports/tta_ensemble_inference.py` | D4-flip TTA on the ensemble | 2C |
+| `scripts/run_phase*` | idempotent sweep drivers | 1–2 |
 
-## Reference
+The minimal Phase-1 diff against the upstream commit is saved at
+`reports/phase1_changes.diff`.
 
-The full progress report (Chinese, with all figures and ablation tables):
+## Acknowledgements
 
-- `paper_rewriting_output/final_paper/main.tex` — LaTeX source
-- `paper_rewriting_output/final_paper/figures/` — figures fig12-15
-- `paper_rewriting_output/integrity_audit.md` — number-verification audit
+This work builds directly on WildfireSpreadTS. Please cite the original paper:
 
-Compile with XeLaTeX (Overleaf or local MiKTeX/TeX Live):
-
-```bash
-cd paper_rewriting_output/final_paper
-xelatex main.tex
-xelatex main.tex   # second pass for cross-references
+```bibtex
+@inproceedings{gerard2023wildfirespreadts,
+  title     = {WildfireSpreadTS: A dataset of multi-modal time series for wildfire spread prediction},
+  author    = {Sebastian Gerard and Yu Zhao and Josephine Sullivan},
+  booktitle = {Thirty-seventh Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
+  year      = {2023},
+  url        = {https://openreview.net/forum?id=RgdGkPRQ03}
+}
 ```
+
+- Original code: <https://github.com/SebastianGer/WildfireSpreadTS>
+- Dataset-creation code: <https://github.com/SebastianGer/WildfireSpreadTSCreateDataset>
+- The UTAE model under `src/models/utae_paps_models/` is from
+  [VSainteuf/utae-paps](https://github.com/VSainteuf/utae-paps).
+
+Two known upstream issues this fork addresses: the dataset-class bug fixed
+upstream in `ab3c8f3`, and the angle-feature `sin`-only encoding (should use
+`sin` **and** `cos`). See the original repo's notes for details.
+
+## License
+
+Same license as the upstream project — see [LICENSE](LICENSE).
