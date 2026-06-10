@@ -1,0 +1,28 @@
+# FNO at the 16x16 encoder stage (128 ch). Higher-resolution placement where mode
+# truncation is actually meaningful — the brief's fallback if bottleneck Delta is null.
+seed_everything: 0
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.001
+    weight_decay: 1.0e-4
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.CosineAnnealingLR
+  init_args:
+    T_max: 100
+model:
+  class_path: models.FNOSMPModel
+  init_args:
+    encoder_name: resnet18
+    n_channels: 40
+    flatten_temporal_dimension: true
+    pos_class_weight: 236
+    loss_function: Focal
+    fno_stage: 3        # 128 ch @ 16x16
+    fno_modes_h: 8
+    fno_modes_w: 8
+    n_fno_blocks: 1
+
+do_train: true
+do_predict: false
+do_test: true
